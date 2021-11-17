@@ -2,10 +2,11 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net462</TargetFramework>
-    <Platforms>x86;AnyCPU</Platforms>
+    <Platforms>x86;AnyCPU;x64</Platforms>
     
     <ApplicationIcon>..\NzbDrone.Host\Sonarr.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\NzbDrone.Host\Sonarr.Host.csproj" />
