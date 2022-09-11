@@ -1,6 +1,13 @@
 #! /usr/bin/env bash
 set -e
 
+MoveIntoFolder() {
+  cd /home/draper/RiderProjects/Sonarr
+}
+MoveIntoFolder
+buildVersion=$(jq -r '.version' ./root/VERSION.json)
+BUILD_NUMBER=$(echo "$buildVersion" | cut -d. -f4)
+
 outputFolder='_output'
 testPackageFolder='_tests'
 artifactsFolder="_artifacts";
@@ -19,13 +26,33 @@ ProgressEnd()
     echo "##teamcity[blockClosed name='$1']"
 }
 
+FetchLatestVersion()
+{
+  MoveIntoFolder
+  echo "Updating Version from API"
+  cd ./root || return
+  ./update.sh
+  MoveIntoFolder || return
+}
+
 UpdateVersionNumber()
 {
-    if [ "$SONARR_VERSION" != "" ]; then
-        echo "Updating version info to: $SONARR_VERSION"
-        sed -i'' -e "s/<AssemblyVersion>[0-9.*]\+<\/AssemblyVersion>/<AssemblyVersion>$SONARR_VERSION<\/AssemblyVersion>/g" src/Directory.Build.props
-        sed -i'' -e "s/<AssemblyConfiguration>[\$()A-Za-z-]\+<\/AssemblyConfiguration>/<AssemblyConfiguration>${BRANCH}<\/AssemblyConfiguration>/g" src/Directory.Build.props
-        sed -i'' -e "s/<string>10.0.0.0<\/string>/<string>$SONARR_VERSION<\/string>/g" distribution/macOS/Sonarr.app/Contents/Info.plist
+    if [ "$BUILD_NUMBER" != "" ]; then
+        echo "Updating Version Info"
+        verMajorMinorRevision=`echo "$buildVersion" | cut -d. -f1,2,3`
+        verBuild=`echo "${buildVersion}" | cut -d. -f4`
+        BUILD_NUMBER=$verMajorMinorRevision.$verBuild
+        echo "##teamcity[buildNumber '$BUILD_NUMBER']"
+        sed -i "s/<AssemblyVersion>[0-9.*]\+<\/AssemblyVersion>/<AssemblyVersion>$BUILD_NUMBER<\/AssemblyVersion>/g" ./src/Directory.Build.props
+        sed -i "s/<AssemblyConfiguration>[\$()A-Za-z-]\+<\/AssemblyConfiguration>/<AssemblyConfiguration>${BRANCH:-dev}<\/AssemblyConfiguration>/g" ./src/Directory.Build.props
+    fi
+}
+
+CreateReleaseInfo()
+{
+    if [ "$BUILD_NUMBER" != "" ]; then
+        echo "Create Release Info"
+        echo -e "# Do Not Edit\nReleaseVersion=$BUILD_NUMBER\nBranch=${BRANCH:-dev}" > $outputFolder/release_info
     fi
 }
 
@@ -295,6 +322,49 @@ UploadArtifacts()
     ProgressEnd 'Publishing Artifacts'
 }
 
+BuildDocker()
+{
+    ProgressStart 'Building Docker Image'
+    VERSION=$(jq -r '.version' ./root/VERSION.json)
+    docker build . -t "drapersniper/sonarr:latest" -t "drapersniper/sonarr:v$VERSION"
+    
+    ProgressEnd 'Building Docker Image'
+}
+
+PushDocker()
+{
+    ProgressStart 'Publishing Docker Images'
+
+    docker push drapersniper/sonarr -a
+    
+    ProgressEnd 'Publishing Docker Images'
+}
+
+UpdateHotioVersion()
+{
+  DISCORD=$(jq -r '.arr_discord_notifier_version' ./root/VERSION.json)
+  BRANCH=$(jq -r '.sbranch' ./root/VERSION.json)
+  sed -i -e "s/ENV VERSION=.*/ENV VERSION=$buildVersion/g" ./Dockerfile
+  sed -i -e "s/ENV ARR_DISCORD_NOTIFIER_VERSION=.*/ENV ARR_DISCORD_NOTIFIER_VERSION=$DISCORD/g" ./Dockerfile
+  sed -i -e "s/ENV SBRANCH=.*/ENV SBRANCH=$BRANCH/g" ./Dockerfile
+}
+
+GitUpdate()
+{
+  MoveIntoFolder
+  git commit -a -m "Updating post build - VERSION=$buildVersion BRANCH=$BRANCH"
+  git push
+  git restore .
+
+}
+UpdateProject()
+{
+    MoveIntoFolder
+    git fetch
+    git pull --rebase
+}
+
+
 # Use mono or .net depending on OS
 case "$(uname -s)" in
     CYGWIN*|MINGW32*|MINGW64*|MSYS*)
@@ -367,7 +437,8 @@ case $key in
 esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
-
+UpdateProject
+FetchLatestVersion
 if [ "$BACKEND" = "YES" ];
 then
     UpdateVersionNumber
@@ -378,21 +449,6 @@ then
     fi
 
     Build
-
-    if [[ -z "$RID" || -z "$FRAMEWORK" ]];
-    then
-        PackageTests "net6.0" "win-x64"
-        PackageTests "net6.0" "win-x86"
-        PackageTests "net6.0" "linux-x64"
-        PackageTests "net6.0" "linux-musl-x64"
-        PackageTests "net6.0" "osx-x64"
-        if [ "$ENABLE_BSD" = "YES" ];
-        then
-            PackageTests "net6.0" "freebsd-x64"
-        fi
-    else
-        PackageTests "$FRAMEWORK" "$RID"
-    fi
 
     UploadTestArtifacts "net6.0"
 fi
@@ -420,15 +476,7 @@ then
 
     if [[ -z "$RID" || -z "$FRAMEWORK" ]];
     then
-        Package "net6.0" "win-x64"
-        Package "net6.0" "win-x86"
         Package "net6.0" "linux-x64"
-        Package "net6.0" "linux-musl-x64"
-        Package "net6.0" "linux-arm64"
-        Package "net6.0" "linux-musl-arm64"
-        Package "net6.0" "linux-arm"
-        Package "net6.0" "osx-x64"
-        Package "net6.0" "osx-arm64"
         if [ "$ENABLE_BSD" = "YES" ];
         then
             Package "net6.0" "freebsd-x64"
@@ -439,3 +487,8 @@ then
 
     UploadArtifacts "net6.0"
 fi
+
+UpdateHotioVersion
+BuildDocker
+PushDocker
+GitUpdate
