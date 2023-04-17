@@ -342,6 +342,7 @@ BuildDocker()
     docker build \
     --build-arg "BUILD_DATE=$BUILD_DATE" \
     --build-arg "VERSION=$VERSION" \
+    --build-arg "SBRANCH=$SBRANCH" \
     --build-arg "SONARR_VERSION=$VERSION" \
     --build-arg "SONARR_HASH=$SONARR_HASH" \
     --build-arg "UPSTREAM_IMAGE=$UPSTREAM_IMAGE" \
