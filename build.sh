@@ -5,7 +5,7 @@ MoveIntoFolder() {
   cd /home/draper/RiderProjects/Sonarr
 }
 MoveIntoFolder
-buildVersion=$(jq -r '.version' ./root/VERSION.json)
+buildVersion=$(jq -r '.version' ./hotio/VERSION.json)
 BUILD_NUMBER=$(echo "$buildVersion" | cut -d. -f4)
 
 outputFolder='_output'
@@ -30,7 +30,7 @@ FetchLatestVersion()
 {
   MoveIntoFolder
   echo "Updating Version from API"
-  cd ./root || return
+  cd ./hotio || return
   ./update-digests.sh
   ./update-versions.sh
   MoveIntoFolder || return
@@ -332,11 +332,11 @@ UploadUIArtifacts()
 BuildDocker()
 {
     ProgressStart 'Building Docker Image'
-    VERSION=$(jq -r '.version' ./root/VERSION.json)
-    ARR_DISCORD_NOTIFIER_VERSION=$(jq -r '.arr_discord_notifier_version' ./root/VERSION.json)
-    SBRANCH=$(jq -r '.sbranch' ./root/VERSION.json)
-    UPSTREAM_IMAGE=$(jq -r '.upstream_image' ./root/VERSION.json)
-    UPSTREAM_DIGEST_AMD64=$(jq -r '.upstream_digest_amd64' ./root/VERSION.json)
+    VERSION=$(jq -r '.version' ./hotio/VERSION.json)
+    ARR_DISCORD_NOTIFIER_VERSION=$(jq -r '.arr_discord_notifier_version' ./hotio/VERSION.json)
+    SBRANCH=$(jq -r '.sbranch' ./hotio/VERSION.json)
+    UPSTREAM_IMAGE=$(jq -r '.upstream_image' ./hotio/VERSION.json)
+    UPSTREAM_DIGEST_AMD64=$(jq -r '.upstream_digest_amd64' ./hotio/VERSION.json)
     SONARR_HASH=$(git rev-parse "$(git branch | cut -d' ' -f2)")
     BUILD_DATE=$(date)
     docker build \
@@ -366,8 +366,8 @@ PushDocker()
 
 UpdateHotioVersion()
 {
-  DISCORD=$(jq -r '.arr_discord_notifier_version' ./root/VERSION.json)
-  BRANCH=$(jq -r '.sbranch' ./root/VERSION.json)
+  DISCORD=$(jq -r '.arr_discord_notifier_version' ./hotio/VERSION.json)
+  BRANCH=$(jq -r '.sbranch' ./hotio/VERSION.json)
   sed -i -e "s/ENV VERSION=.*/ENV VERSION=$buildVersion/g" ./Dockerfile
   sed -i -e "s/ENV ARR_DISCORD_NOTIFIER_VERSION=.*/ENV ARR_DISCORD_NOTIFIER_VERSION=$DISCORD/g" ./Dockerfile
   sed -i -e "s/ENV SBRANCH=.*/ENV SBRANCH=$BRANCH/g" ./Dockerfile
