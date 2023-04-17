@@ -337,9 +337,11 @@ BuildDocker()
     SBRANCH=$(jq -r '.sbranch' ./root/VERSION.json)
     UPSTREAM_IMAGE=$(jq -r '.upstream_image' ./root/VERSION.json)
     UPSTREAM_DIGEST_AMD64=$(jq -r '.upstream_digest_amd64' ./root/VERSION.json)
+    SONARR_HASH=$(git rev-parse "$(git branch | cut -d' ' -f2)")
     docker build \
     --build-arg "VERSION=$VERSION" \
-    --build-arg "SBRANCH=$SBRANCH" \
+    --build-arg "SONARR_VERSION=$VERSION" \
+    --build-arg "SONARR_HASH=$SONARR_HASH" \
     --build-arg "UPSTREAM_IMAGE=$UPSTREAM_IMAGE" \
     --build-arg "UPSTREAM_DIGEST_AMD64=$UPSTREAM_DIGEST_AMD64" \
     --build-arg "ARR_DISCORD_NOTIFIER_VERSION=$ARR_DISCORD_NOTIFIER_VERSION" \
