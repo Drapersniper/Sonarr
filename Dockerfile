@@ -7,9 +7,9 @@ ARG VERSION
 ARG SBRANCH
 ARG PACKAGE_VERSION=${VERSION}
 COPY _output/net6.0/linux-x64/ /app/bin
+COPY _output/UI /app/bin/UI
 RUN mkdir -p "${APP_DIR}/bin" && \
-    rm -rf "${APP_DIR}/bin/Sonarr.Update" && \
-    echo -e "PackageVersion=${PACKAGE_VERSION}\nPackageAuthor=[hotio](https://github.com/hotio)\nUpdateMethod=Docker\nBranch=${SBRANCH}" > "${APP_DIR}/package_info" && \
+    echo -e "PackageVersion=${PACKAGE_VERSION}\nPackageAuthor=[Draper](https://hub.docker.com/r/drapersniper/sonarr)\nUpdateMethod=Docker\nBranch=${SBRANCH}" > "${APP_DIR}/package_info" && \
     chmod -R u=rwX,go=rX "${APP_DIR}" && \
     chmod +x "${APP_DIR}/bin/Sonarr" "${APP_DIR}/bin/ffprobe"
 COPY root/ /
