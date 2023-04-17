@@ -31,7 +31,8 @@ FetchLatestVersion()
   MoveIntoFolder
   echo "Updating Version from API"
   cd ./root || return
-  ./update.sh
+  ./update-digests.sh
+  ./update-versions.sh
   MoveIntoFolder || return
 }
 
@@ -448,8 +449,8 @@ case $key in
 esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
-UpdateProject
-FetchLatestVersion
+#UpdateProject
+#FetchLatestVersion
 if [ "$ENABLE_EXTRA_PLATFORMS_IN_SDK" = "YES" ];
 then
     EnableExtraPlatformsInSDK
