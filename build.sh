@@ -333,7 +333,19 @@ BuildDocker()
 {
     ProgressStart 'Building Docker Image'
     VERSION=$(jq -r '.version' ./root/VERSION.json)
-    docker build . -t "drapersniper/sonarr:latest" -t "drapersniper/sonarr:v$VERSION"
+    ARR_DISCORD_NOTIFIER_VERSION=$(jq -r '.arr_discord_notifier_version' ./root/VERSION.json)
+    SBRANCH=$(jq -r '.sbranch' ./root/VERSION.json)
+    UPSTREAM_IMAGE=$(jq -r '.upstream_image' ./root/VERSION.json)
+    UPSTREAM_DIGEST_AMD64=$(jq -r '.upstream_digest_amd64' ./root/VERSION.json)
+    docker build \
+    --build-arg "VERSION=$VERSION" \
+    --build-arg "SBRANCH=$SBRANCH" \
+    --build-arg "UPSTREAM_IMAGE=$UPSTREAM_IMAGE" \
+    --build-arg "UPSTREAM_DIGEST_AMD64=$UPSTREAM_DIGEST_AMD64" \
+    --build-arg "ARR_DISCORD_NOTIFIER_VERSION=$ARR_DISCORD_NOTIFIER_VERSION" \
+    . \
+    -t "drapersniper/sonarr:latest" \
+    -t "drapersniper/sonarr:v$VERSION"
     
     ProgressEnd 'Building Docker Image'
 }
