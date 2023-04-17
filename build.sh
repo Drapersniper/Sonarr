@@ -338,7 +338,9 @@ BuildDocker()
     UPSTREAM_IMAGE=$(jq -r '.upstream_image' ./root/VERSION.json)
     UPSTREAM_DIGEST_AMD64=$(jq -r '.upstream_digest_amd64' ./root/VERSION.json)
     SONARR_HASH=$(git rev-parse "$(git branch | cut -d' ' -f2)")
+    BUILD_DATE=$(date)
     docker build \
+    --build-arg "BUILD_DATE=$BUILD_DATE" \
     --build-arg "VERSION=$VERSION" \
     --build-arg "SONARR_VERSION=$VERSION" \
     --build-arg "SONARR_HASH=$SONARR_HASH" \
