@@ -6,6 +6,8 @@ MoveIntoFolder() {
 }
 MoveIntoFolder
 buildVersion=$(jq -r '.version' ./hotio/VERSION.json)
+SONARR_VERSION=$(jq -r '.version' ./hotio/VERSION.json)
+BRANCH=$(jq -r '.sbranch' ./hotio/VERSION.json)
 BUILD_NUMBER=$(echo "$buildVersion" | cut -d. -f4)
 
 outputFolder='_output'
@@ -364,15 +366,6 @@ PushDocker()
     ProgressEnd 'Publishing Docker Images'
 }
 
-UpdateHotioVersion()
-{
-  DISCORD=$(jq -r '.arr_discord_notifier_version' ./hotio/VERSION.json)
-  BRANCH=$(jq -r '.sbranch' ./hotio/VERSION.json)
-  sed -i -e "s/ENV VERSION=.*/ENV VERSION=$buildVersion/g" ./Dockerfile
-  sed -i -e "s/ENV ARR_DISCORD_NOTIFIER_VERSION=.*/ENV ARR_DISCORD_NOTIFIER_VERSION=$DISCORD/g" ./Dockerfile
-  sed -i -e "s/ENV SBRANCH=.*/ENV SBRANCH=$BRANCH/g" ./Dockerfile
-}
-
 GitUpdate()
 {
   MoveIntoFolder
@@ -459,6 +452,10 @@ case $key in
         LINT=YES
         shift # past argument
         ;;
+    --docker)
+        DOCKER=YES
+        shift # past argument
+        ;;
     *)    # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift # past argument
@@ -539,7 +536,11 @@ then
 
     UploadArtifacts "net6.0"
 fi
-UpdateHotioVersion
-BuildDocker
-PushDocker
-GitUpdate
+
+if [ "$DOCKER" = "YES" ];
+then
+  UpdateHotioVersion
+  BuildDocker
+  PushDocker
+  GitUpdate
+fi
