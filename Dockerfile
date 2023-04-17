@@ -17,8 +17,13 @@ RUN mkdir -p "${APP_DIR}/bin"
 
 
 RUN mkdir -p "${APP_DIR}/bin" && \
-    curl -fsSL "https://download.sonarr.tv/v4/${SBRANCH}/${VERSION}/Sonarr.${SBRANCH}.${VERSION}.linux-musl-arm64.tar.gz" | tar xzf - -C "${APP_DIR}/bin" --strip-components=1 && \
-    rm -rf "${APP_DIR}/bin/Sonarr.Update" && \
+    curl -fsSL "https://download.sonarr.tv/v4/${SBRANCH}/${VERSION}/Sonarr.${SBRANCH}.${VERSION}.linux-musl-arm64.tar.gz" | tar xzf - -C "${APP_DIR}/bin" --strip-components=1
+
+WORKDIR /app/bin/
+COPY _artifacts/linux-x64/net6.0/Sonarr /app/bin/
+    
+    
+RUN rm -rf "${APP_DIR}/bin/Sonarr.Update" && \
     echo -e "PackageVersion=${PACKAGE_VERSION}\nPackageAuthor=[Draper](https://hub.docker.com/r/drapersniper/sonarr)\nUpdateMethod=Docker\nBranch=${SBRANCH}" > "${APP_DIR}/package_info" && \
     chmod -R u=rwX,go=rX "${APP_DIR}" && \
     chmod +x "${APP_DIR}/bin/Sonarr" "${APP_DIR}/bin/ffprobe"
