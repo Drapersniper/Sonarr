@@ -1,7 +1,3 @@
-[submodule "root"]
-	path = root
-	url = https://github.com/hotio/sonarr
-	branch = v4
 [submodule "linuxserver"]
 	path = linuxserver
 	url = https://github.com/linuxserver/docker-sonarr
