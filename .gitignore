@@ -11,6 +11,7 @@ src/**/[Oo]bj/
 *.user
 *.sln.docstates
 .vs/
+.idea/
 
 # Build results
 *_i.c
