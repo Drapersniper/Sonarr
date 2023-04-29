@@ -1,10 +1,29 @@
 #! /usr/bin/env bash
 set -e
-
 MoveIntoFolder() {
   cd /home/draper/RiderProjects/Sonarr
 }
+UpdateProject()
+{
+    MoveIntoFolder
+    git fetch
+    git fetch upstream
+    git pull --rebase --autostash upstream develop
+}
+FetchLatestVersion()
+{
+  MoveIntoFolder
+  echo "Updating Version from API"
+  cd ./hotio || return
+  chmod +x ./update-digests.sh
+  chmod +x ./update-versions.sh
+  ./update-digests.sh
+  ./update-versions.sh
+  MoveIntoFolder || return
+}
 MoveIntoFolder
+FetchLatestVersion
+UpdateProject
 buildVersion=$(jq -r '.version' ./hotio/VERSION.json)
 SONARR_VERSION=$(jq -r '.version' ./hotio/VERSION.json)
 BRANCH=$(jq -r '.sbranch' ./hotio/VERSION.json)
@@ -366,6 +385,7 @@ PushDocker()
     ProgressEnd 'Publishing Docker Images'
 }
 
+
 GitUpdate()
 {
   MoveIntoFolder
@@ -374,14 +394,6 @@ GitUpdate()
   git restore .
 
 }
-UpdateProject()
-{
-    MoveIntoFolder
-    git fetch
-    git pull --rebase --autostash
-}
-
-
 # Use mono or .net depending on OS
 case "$(uname -s)" in
     CYGWIN*|MINGW32*|MINGW64*|MSYS*)
@@ -463,8 +475,7 @@ case $key in
 esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
-#UpdateProject
-#FetchLatestVersion
+
 if [ "$ENABLE_EXTRA_PLATFORMS_IN_SDK" = "YES" ];
 then
     EnableExtraPlatformsInSDK
@@ -477,9 +488,7 @@ then
     then
         EnableExtraPlatforms
     fi
-
     Build
-
     if [[ -z "$RID" || -z "$FRAMEWORK" ]];
     then
         PackageTests "net6.0" "win-x64"
