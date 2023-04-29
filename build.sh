@@ -31,6 +31,8 @@ BUILD_NUMBER=$(echo "$buildVersion" | cut -d. -f4)
 
 outputFolder='_output'
 testPackageFolder='_tests'
+
+#Artifact variables
 artifactsFolder="_artifacts";
 
 ProgressStart()
@@ -390,7 +392,7 @@ GitUpdate()
 {
   MoveIntoFolder
   git commit -a -m "Updating post build - VERSION=$buildVersion BRANCH=$BRANCH"
-  git push
+  git push --set-upstream origin custom --force
   git restore .
 
 }
