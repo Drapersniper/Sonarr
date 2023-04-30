@@ -15,6 +15,7 @@ FetchLatestVersion()
   MoveIntoFolder
   echo "Updating Version from API"
   cd ./hotio || return
+  git pull --rebase --autostash
   chmod +x ./update-digests.sh
   chmod +x ./update-versions.sh
   ./update-digests.sh
