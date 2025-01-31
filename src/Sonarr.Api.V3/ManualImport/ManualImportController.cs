@@ -43,8 +43,9 @@ namespace Sonarr.Api.V3.ManualImport
 
                 item.SeasonNumber = processedItem.SeasonNumber;
                 item.Episodes = processedItem.Episodes.ToResource();
+                item.ReleaseType = processedItem.ReleaseType;
                 item.IndexerFlags = processedItem.IndexerFlags;
-                item.Rejections = processedItem.Rejections;
+                item.Rejections = processedItem.Rejections.Select(r => r.ToResource());
                 item.CustomFormats = processedItem.CustomFormats.ToResource(false);
                 item.CustomFormatScore = processedItem.CustomFormatScore;
 

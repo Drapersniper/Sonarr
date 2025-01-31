@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Diacritical;
-using DryIoc.ImTools;
 using NLog;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Disk;
@@ -73,7 +72,7 @@ namespace NzbDrone.Core.Organizer
         private static readonly Regex FileNameCleanupRegex = new Regex(@"([- ._])(\1)+", RegexOptions.Compiled);
         private static readonly Regex TrimSeparatorsRegex = new Regex(@"[- ._]+$", RegexOptions.Compiled);
 
-        private static readonly Regex ScenifyRemoveChars = new Regex(@"(?<=\s)(,|<|>|\/|\\|;|:|'|""|\||`|~|!|\?|@|$|%|^|\*|-|_|=){1}(?=\s)|('|:|\?|,)(?=(?:(?:s|m)\s)|\s|$)|(\(|\)|\[|\]|\{|\})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex ScenifyRemoveChars = new Regex(@"(?<=\s)(,|<|>|\/|\\|;|:|'|""|\||`|’|~|!|\?|@|$|%|^|\*|-|_|=){1}(?=\s)|('|`|’|:|\?|,)(?=(?:(?:s|m|t|ve|ll|d|re)\s)|\s|$)|(\(|\)|\[|\]|\{|\})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex ScenifyReplaceChars = new Regex(@"[\/]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         // TODO: Support Written numbers (One, Two, etc) and Roman Numerals (I, II, III etc)
@@ -111,6 +110,9 @@ namespace NzbDrone.Core.Organizer
             { "tib", "bod" },
             { "wel", "cym" }
         }.ToImmutableDictionary();
+
+        public static readonly ImmutableArray<string> BadCharacters = ImmutableArray.Create("\\", "/", "<", ">", "?", "*", "|", "\"");
+        public static readonly ImmutableArray<string> GoodCharacters = ImmutableArray.Create("+", "+", "", "", "!", "-", "", "");
 
         public FileNameBuilder(INamingConfigService namingConfigService,
                                IQualityDefinitionService qualityDefinitionService,
@@ -185,6 +187,7 @@ namespace NzbDrone.Core.Organizer
 
                 splitPattern = AddSeasonEpisodeNumberingTokens(splitPattern, tokenHandlers, episodes, namingConfig);
                 splitPattern = AddAbsoluteNumberingTokens(splitPattern, tokenHandlers, series, episodes, namingConfig);
+                splitPattern = splitPattern.Replace("...", "{{ellipsis}}");
 
                 UpdateMediaInfoIfNeeded(splitPattern, episodeFile, series);
 
@@ -642,7 +645,7 @@ namespace NzbDrone.Core.Organizer
             new Dictionary<string, int>(FileNameBuilderTokenEqualityComparer.Instance)
         {
             { MediaInfoVideoDynamicRangeToken, 5 },
-            { MediaInfoVideoDynamicRangeTypeToken, 10 }
+            { MediaInfoVideoDynamicRangeTypeToken, 11 }
         };
 
         private void AddMediaInfoTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, EpisodeFile episodeFile)
@@ -706,7 +709,7 @@ namespace NzbDrone.Core.Organizer
                     return string.Empty;
                 }
 
-                return customFormats.Where(x => x.IncludeCustomFormatWhenRenaming && x.Name == m.CustomFormat).FirstOrDefault()?.ToString() ?? string.Empty;
+                return customFormats.FirstOrDefault(x => x.IncludeCustomFormatWhenRenaming && x.Name == m.CustomFormat)?.ToString() ?? string.Empty;
             };
         }
 
@@ -715,11 +718,12 @@ namespace NzbDrone.Core.Organizer
             tokenHandlers["{ImdbId}"] = m => series.ImdbId ?? string.Empty;
             tokenHandlers["{TvdbId}"] = m => series.TvdbId.ToString();
             tokenHandlers["{TvMazeId}"] = m => series.TvMazeId > 0 ? series.TvMazeId.ToString() : string.Empty;
+            tokenHandlers["{TmdbId}"] = m => series.TmdbId > 0 ? series.TmdbId.ToString() : string.Empty;
         }
 
         private string GetCustomFormatsToken(List<CustomFormat> customFormats, string filter)
         {
-            var tokens = customFormats.Where(x => x.IncludeCustomFormatWhenRenaming);
+            var tokens = customFormats.Where(x => x.IncludeCustomFormatWhenRenaming).ToList();
 
             var filteredTokens = tokens;
 
@@ -1113,10 +1117,10 @@ namespace NzbDrone.Core.Organizer
         {
             if (episodeFile.SceneName.IsNullOrWhiteSpace())
             {
-                return GetOriginalFileName(episodeFile, useCurrentFilenameAsFallback);
+                return CleanFileName(GetOriginalFileName(episodeFile, useCurrentFilenameAsFallback));
             }
 
-            return episodeFile.SceneName;
+            return CleanFileName(episodeFile.SceneName);
         }
 
         private string GetOriginalFileName(EpisodeFile episodeFile, bool useCurrentFilenameAsFallback)
@@ -1155,8 +1159,6 @@ namespace NzbDrone.Core.Organizer
         private static string CleanFileName(string name, NamingConfig namingConfig)
         {
             var result = name;
-            string[] badCharacters = { "\\", "/", "<", ">", "?", "*", "|", "\"" };
-            string[] goodCharacters = { "+", "+", "", "", "!", "-", "", "" };
 
             if (namingConfig.ReplaceIllegalCharacters)
             {
@@ -1181,6 +1183,9 @@ namespace NzbDrone.Core.Organizer
                         case ColonReplacementFormat.SpaceDashSpace:
                             replacement = " - ";
                             break;
+                        case ColonReplacementFormat.Custom:
+                            replacement = namingConfig.CustomColonReplacementFormat;
+                            break;
                     }
 
                     result = result.Replace(":", replacement);
@@ -1191,9 +1196,9 @@ namespace NzbDrone.Core.Organizer
                 result = result.Replace(":", string.Empty);
             }
 
-            for (var i = 0; i < badCharacters.Length; i++)
+            for (var i = 0; i < BadCharacters.Length; i++)
             {
-                result = result.Replace(badCharacters[i], namingConfig.ReplaceIllegalCharacters ? goodCharacters[i] : string.Empty);
+                result = result.Replace(BadCharacters[i], namingConfig.ReplaceIllegalCharacters ? GoodCharacters[i] : string.Empty);
             }
 
             return result.TrimStart(' ', '.').TrimEnd(' ');
@@ -1267,6 +1272,7 @@ namespace NzbDrone.Core.Organizer
         Dash = 1,
         SpaceDash = 2,
         SpaceDashSpace = 3,
-        Smart = 4
+        Smart = 4,
+        Custom = 5
     }
 }

@@ -6,7 +6,7 @@ import Icon from 'Components/Icon';
 import { filterBuilderTypes, filterBuilderValueTypes, icons, sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
-import serverSideCollectionHandlers from 'Utilities/serverSideCollectionHandlers';
+import serverSideCollectionHandlers from 'Utilities/State/serverSideCollectionHandlers';
 import translate from 'Utilities/String/translate';
 import { set, updateItem } from './baseActions';
 import createFetchHandler from './Creators/createFetchHandler';
@@ -212,6 +212,12 @@ export const defaultState = {
         label: () => translate('Protocol'),
         type: filterBuilderTypes.EQUAL,
         valueType: filterBuilderValueTypes.PROTOCOL
+      },
+      {
+        name: 'status',
+        label: () => translate('Status'),
+        type: filterBuilderTypes.EQUAL,
+        valueType: filterBuilderValueTypes.QUEUE_STATUS
       }
     ]
   }

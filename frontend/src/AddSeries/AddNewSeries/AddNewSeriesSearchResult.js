@@ -6,6 +6,7 @@ import Label from 'Components/Label';
 import Link from 'Components/Link/Link';
 import MetadataAttribution from 'Components/MetadataAttribution';
 import { icons, kinds, sizes } from 'Helpers/Props';
+import SeriesGenres from 'Series/SeriesGenres';
 import SeriesPoster from 'Series/SeriesPoster';
 import translate from 'Utilities/String/translate';
 import AddNewSeriesModal from './AddNewSeriesModal';
@@ -55,6 +56,8 @@ class AddNewSeriesSearchResult extends Component {
       titleSlug,
       year,
       network,
+      originalLanguage,
+      genres,
       status,
       overview,
       statistics,
@@ -145,14 +148,49 @@ class AddNewSeriesSearchResult extends Component {
               <Label size={sizes.LARGE}>
                 <HeartRating
                   rating={ratings.value}
+                  votes={ratings.votes}
                   iconSize={13}
                 />
               </Label>
 
               {
+                originalLanguage?.name ?
+                  <Label size={sizes.LARGE}>
+                    <Icon
+                      name={icons.LANGUAGE}
+                      size={13}
+                    />
+
+                    <span className={styles.originalLanguageName}>
+                      {originalLanguage.name}
+                    </span>
+                  </Label> :
+                  null
+              }
+
+              {
                 network ?
                   <Label size={sizes.LARGE}>
-                    {network}
+                    <Icon
+                      name={icons.NETWORK}
+                      size={13}
+                    />
+
+                    <span className={styles.network}>
+                      {network}
+                    </span>
+                  </Label> :
+                  null
+              }
+
+              {
+                genres.length > 0 ?
+                  <Label size={sizes.LARGE}>
+                    <Icon
+                      name={icons.GENRE}
+                      size={13}
+                    />
+                    <SeriesGenres className={styles.genres} genres={genres} />
                   </Label> :
                   null
               }
@@ -218,6 +256,8 @@ AddNewSeriesSearchResult.propTypes = {
   titleSlug: PropTypes.string.isRequired,
   year: PropTypes.number.isRequired,
   network: PropTypes.string,
+  originalLanguage: PropTypes.object,
+  genres: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
   overview: PropTypes.string,
   statistics: PropTypes.object.isRequired,
@@ -227,6 +267,10 @@ AddNewSeriesSearchResult.propTypes = {
   images: PropTypes.arrayOf(PropTypes.object).isRequired,
   isExistingSeries: PropTypes.bool.isRequired,
   isSmallScreen: PropTypes.bool.isRequired
+};
+
+AddNewSeriesSearchResult.defaultProps = {
+  genres: []
 };
 
 export default AddNewSeriesSearchResult;

@@ -17,9 +17,10 @@ function createMapStateToProps() {
   return createSelector(
     (state) => state.wanted.missing,
     createCommandExecutingSelector(commandNames.MISSING_EPISODE_SEARCH),
-    (missing, isSearchingForMissingEpisodes) => {
+    createCommandExecutingSelector(commandNames.EPISODE_SEARCH),
+    (missing, isSearchingForAllMissingEpisodes, isSearchingForSelectedMissingEpisodes) => {
       return {
-        isSearchingForMissingEpisodes,
+        isSearchingForMissingEpisodes: isSearchingForAllMissingEpisodes || isSearchingForSelectedMissingEpisodes,
         isSaving: missing.items.filter((m) => m.isSaving).length > 1,
         ...missing
       };
@@ -117,14 +118,16 @@ class MissingConnector extends Component {
   onSearchSelectedPress = (selected) => {
     this.props.executeCommand({
       name: commandNames.EPISODE_SEARCH,
-      episodeIds: selected
+      episodeIds: selected,
+      commandFinished: this.repopulate
     });
   };
 
   onSearchAllMissingPress = (monitored) => {
     this.props.executeCommand({
       name: commandNames.MISSING_EPISODE_SEARCH,
-      monitored
+      monitored,
+      commandFinished: this.repopulate
     });
   };
 

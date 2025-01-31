@@ -190,6 +190,23 @@ namespace NzbDrone.Core.ImportLists
                     item.Title = mappedSeries.Title;
                 }
 
+                // Map by MyAniList ID if we have it
+                if (item.TvdbId <= 0 && item.MalId > 0)
+                {
+                    var mappedSeries = _seriesSearchService.SearchForNewSeriesByMyAnimeListId(item.MalId)
+                        .FirstOrDefault();
+
+                    if (mappedSeries == null)
+                    {
+                        _logger.Debug("Rejected, unable to find matching TVDB ID for MAL ID: {0} [{1}]", item.MalId, item.Title);
+
+                        continue;
+                    }
+
+                    item.TvdbId = mappedSeries.TvdbId;
+                    item.Title = mappedSeries.Title;
+                }
+
                 if (item.TvdbId == 0)
                 {
                     _logger.Debug("[{0}] Rejected, unable to find TVDB ID", item.Title);
@@ -282,12 +299,18 @@ namespace NzbDrone.Core.ImportLists
 
             var seriesToUpdate = new List<Series>();
             var seriesInLibrary = _seriesService.GetAllSeries();
+            var allListItems = _importListItemService.All();
 
             foreach (var series in seriesInLibrary)
             {
-                var seriesExists = _importListItemService.Exists(series.TvdbId, series.ImdbId);
+                var seriesExists = allListItems.Where(l =>
+                    l.TvdbId == series.TvdbId ||
+                    l.ImdbId == series.ImdbId ||
+                    l.TmdbId == series.TmdbId ||
+                    series.MalIds.Contains(l.MalId) ||
+                    series.AniListIds.Contains(l.AniListId)).ToList();
 
-                if (!seriesExists)
+                if (!seriesExists.Any())
                 {
                     switch (_configService.ListSyncLevel)
                     {

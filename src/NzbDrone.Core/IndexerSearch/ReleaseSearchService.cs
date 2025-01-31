@@ -193,7 +193,7 @@ namespace NzbDrone.Core.IndexerSearch
             foreach (var item in dict)
             {
                 item.Value.Episodes = item.Value.Episodes.Distinct().ToList();
-                item.Value.SceneTitles = item.Value.SceneTitles.Distinct().ToList();
+                item.Value.SceneTitles = item.Value.SceneTitles.Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
             }
 
             return dict.Values.ToList();
@@ -221,7 +221,7 @@ namespace NzbDrone.Core.IndexerSearch
 
             foreach (var item in dict)
             {
-                item.Value.SceneTitles = item.Value.SceneTitles.Distinct().ToList();
+                item.Value.SceneTitles = item.Value.SceneTitles.Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
             }
 
             return dict.Values.ToList();
@@ -265,7 +265,7 @@ namespace NzbDrone.Core.IndexerSearch
                     }
                 }
 
-                if (sceneMapping.ParseTerm == series.CleanTitle && sceneMapping.FilterRegex.IsNullOrWhiteSpace())
+                if (sceneMapping.SearchTerm == series.Title && sceneMapping.FilterRegex.IsNullOrWhiteSpace())
                 {
                     // Disable the implied mapping if we have an explicit mapping by the same name
                     includeGlobal = false;
@@ -339,7 +339,9 @@ namespace NzbDrone.Core.IndexerSearch
             var searchSpec = Get<DailyEpisodeSearchCriteria>(series, new List<Episode> { episode }, monitoredOnly, userInvokedSearch, interactiveSearch);
             searchSpec.AirDate = airDate;
 
-            return await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var downloadDecisions = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+
+            return DeDupeDecisions(downloadDecisions);
         }
 
         private async Task<List<DownloadDecision>> SearchAnime(Series series, Episode episode, bool monitoredOnly, bool userInvokedSearch, bool interactiveSearch, bool isSeasonSearch = false)
@@ -352,7 +354,9 @@ namespace NzbDrone.Core.IndexerSearch
             searchSpec.EpisodeNumber = episode.SceneEpisodeNumber ?? episode.EpisodeNumber;
             searchSpec.AbsoluteEpisodeNumber = episode.SceneAbsoluteEpisodeNumber ?? episode.AbsoluteEpisodeNumber ?? 0;
 
-            return await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+            var downloadDecisions = await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec);
+
+            return DeDupeDecisions(downloadDecisions);
         }
 
         private async Task<List<DownloadDecision>> SearchSpecial(Series series, List<Episode> episodes, bool monitoredOnly, bool userInvokedSearch, bool interactiveSearch)
@@ -363,7 +367,9 @@ namespace NzbDrone.Core.IndexerSearch
 
             // build list of queries for each episode in the form: "<series> <episode-title>"
             searchSpec.EpisodeQueryTitles = episodes.Where(e => !string.IsNullOrWhiteSpace(e.Title))
+                                                    .Where(e => interactiveSearch || !monitoredOnly || e.Monitored)
                                                     .SelectMany(e => searchSpec.CleanSceneTitles.Select(title => title + " " + SearchCriteriaBase.GetCleanSceneTitle(e.Title)))
+                                                    .Distinct(StringComparer.InvariantCultureIgnoreCase)
                                                     .ToArray();
 
             downloadDecisions.AddRange(await Dispatch(indexer => indexer.Fetch(searchSpec), searchSpec));
@@ -463,7 +469,7 @@ namespace NzbDrone.Core.IndexerSearch
             spec.UserInvokedSearch = userInvokedSearch;
             spec.InteractiveSearch = interactiveSearch;
 
-            if (!spec.SceneTitles.Contains(series.Title))
+            if (!spec.SceneTitles.Contains(series.Title, StringComparer.InvariantCultureIgnoreCase))
             {
                 spec.SceneTitles.Add(series.Title);
             }

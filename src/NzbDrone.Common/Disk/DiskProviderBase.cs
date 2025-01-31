@@ -153,7 +153,11 @@ namespace NzbDrone.Common.Disk
         {
             Ensure.That(path, () => path).IsValidPath(PathValidationType.CurrentOs);
 
-            return Directory.EnumerateDirectories(path);
+            return Directory.EnumerateDirectories(path, "*", new EnumerationOptions
+            {
+                AttributesToSkip = FileAttributes.System,
+                IgnoreInaccessible = true
+            });
         }
 
         public IEnumerable<string> GetFiles(string path, bool recursive)
@@ -185,6 +189,25 @@ namespace NzbDrone.Common.Disk
             }
 
             var fi = new FileInfo(path);
+
+            try
+            {
+                // If the file is a symlink, resolve the target path and get the size of the target file.
+                if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    var targetPath = fi.ResolveLinkTarget(true)?.FullName;
+
+                    if (targetPath != null)
+                    {
+                        fi = new FileInfo(targetPath);
+                    }
+                }
+            }
+            catch (IOException ex)
+            {
+                Logger.Trace(ex, "Unable to resolve symlink target for {0}", path);
+            }
+
             return fi.Length;
         }
 

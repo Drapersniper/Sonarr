@@ -2,19 +2,19 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Icon from 'Components/Icon';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
-import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellConnector';
+import RelativeDateCell from 'Components/Table/Cells/RelativeDateCell';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableRow from 'Components/Table/TableRow';
 import Popover from 'Components/Tooltip/Popover';
 import Tooltip from 'Components/Tooltip/Tooltip';
 import EpisodeFormats from 'Episode/EpisodeFormats';
 import EpisodeNumber from 'Episode/EpisodeNumber';
-import EpisodeSearchCellConnector from 'Episode/EpisodeSearchCellConnector';
-import EpisodeStatusConnector from 'Episode/EpisodeStatusConnector';
+import EpisodeSearchCell from 'Episode/EpisodeSearchCell';
+import EpisodeStatus from 'Episode/EpisodeStatus';
 import EpisodeTitleLink from 'Episode/EpisodeTitleLink';
 import IndexerFlags from 'Episode/IndexerFlags';
-import EpisodeFileLanguageConnector from 'EpisodeFile/EpisodeFileLanguageConnector';
-import MediaInfoConnector from 'EpisodeFile/MediaInfoConnector';
+import EpisodeFileLanguages from 'EpisodeFile/EpisodeFileLanguages';
+import MediaInfo from 'EpisodeFile/MediaInfo';
 import * as mediaInfoTypes from 'EpisodeFile/mediaInfoTypes';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import formatBytes from 'Utilities/Number/formatBytes';
@@ -147,6 +147,7 @@ class EpisodeRow extends Component {
                     episodeId={id}
                     seriesId={seriesId}
                     episodeTitle={title}
+                    episodeEntity="episodes"
                     finaleType={finaleType}
                     showOpenSeriesButton={false}
                   />
@@ -176,7 +177,7 @@ class EpisodeRow extends Component {
 
             if (name === 'airDateUtc') {
               return (
-                <RelativeDateCellConnector
+                <RelativeDateCell
                   key={name}
                   date={airDateUtc}
                 />
@@ -228,7 +229,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.languages}
                 >
-                  <EpisodeFileLanguageConnector
+                  <EpisodeFileLanguages
                     episodeFileId={episodeFileId}
                   />
                 </TableRowCell>
@@ -241,7 +242,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.audio}
                 >
-                  <MediaInfoConnector
+                  <MediaInfo
                     type={mediaInfoTypes.AUDIO}
                     episodeFileId={episodeFileId}
                   />
@@ -255,7 +256,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.audioLanguages}
                 >
-                  <MediaInfoConnector
+                  <MediaInfo
                     type={mediaInfoTypes.AUDIO_LANGUAGES}
                     episodeFileId={episodeFileId}
                   />
@@ -269,7 +270,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.subtitles}
                 >
-                  <MediaInfoConnector
+                  <MediaInfo
                     type={mediaInfoTypes.SUBTITLES}
                     episodeFileId={episodeFileId}
                   />
@@ -283,7 +284,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.video}
                 >
-                  <MediaInfoConnector
+                  <MediaInfo
                     type={mediaInfoTypes.VIDEO}
                     episodeFileId={episodeFileId}
                   />
@@ -297,7 +298,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.videoDynamicRangeType}
                 >
-                  <MediaInfoConnector
+                  <MediaInfo
                     type={mediaInfoTypes.VIDEO_DYNAMIC_RANGE_TYPE}
                     episodeFileId={episodeFileId}
                   />
@@ -351,7 +352,7 @@ class EpisodeRow extends Component {
                   key={name}
                   className={styles.status}
                 >
-                  <EpisodeStatusConnector
+                  <EpisodeStatus
                     episodeId={id}
                     episodeFileId={episodeFileId}
                   />
@@ -361,9 +362,10 @@ class EpisodeRow extends Component {
 
             if (name === 'actions') {
               return (
-                <EpisodeSearchCellConnector
+                <EpisodeSearchCell
                   key={name}
                   episodeId={id}
+                  episodeEntity='episodes'
                   seriesId={seriesId}
                   episodeTitle={title}
                 />

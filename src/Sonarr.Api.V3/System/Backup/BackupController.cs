@@ -50,7 +50,7 @@ namespace Sonarr.Api.V3.System.Backup
         }
 
         [RestDeleteById]
-        public void DeleteBackup(int id)
+        public object DeleteBackup(int id)
         {
             var backup = GetBackup(id);
 
@@ -67,10 +67,12 @@ namespace Sonarr.Api.V3.System.Backup
             }
 
             _diskProvider.DeleteFile(path);
+
+            return new { };
         }
 
         [HttpPost("restore/{id:int}")]
-        public object Restore(int id)
+        public object Restore([FromRoute] int id)
         {
             var backup = GetBackup(id);
 

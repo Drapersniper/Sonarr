@@ -168,6 +168,15 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Босх: Спадок / Series: Legacy / S2E1 of 10 (2023) WEB-DL 1080p Ukr/Eng | sub Eng", "Series: Legacy", 2, 1)]
         [TestCase("Titles.s06e01.1999.BDRip.1080p.Ukr.Eng.AC3.Hurtom.TNU.Tenax555", "Titles", 6, 1)]
         [TestCase("Titles.s06.01.1999.BDRip.1080p.Ukr.Eng.AC3.Hurtom.TNU.Tenax555", "Titles", 6, 1)]
+        [TestCase("[Judas] Series Title (2024) - S01E14", "Series Title (2024)", 1, 14)]
+        [TestCase("[ReleaseGroup] SeriesTitle S01E1 Webdl 1080p", "SeriesTitle", 1, 1)]
+        [TestCase("[SubsPlus+] Series no Chill - S02E01 (NF WEB 1080p AVC AAC)", "Series no Chill", 2, 1)]
+        [TestCase("[SubsPlus+] Series no Chill - S02E01v2 (NF WEB 1080p AVC AAC)", "Series no Chill", 2, 1)]
+        [TestCase("Series - Temporada 1 - [HDTV 1080p][Cap.101](wolfmax4k.com)", "Series", 1, 1)]
+        [TestCase("Series [HDTV 1080p][Cap.101](wolfmax4k.com)", "Series", 1, 1)]
+        [TestCase("Series [HDTV 1080p][Cap. 101](wolfmax4k.com).mkv", "Series", 1, 1)]
+        [TestCase("Amazing Title (2024/S01E07/DSNP/WEB-DL/1080p/ESP/EAC3 5.1/ING/EAC3 5.1 Atmos/SUBS) SPWEB", "Amazing Title (2024)", 1, 7)]
+        [TestCase("Mini Title (Miniserie) (2024/S01E07/DSNP/WEB-DL/1080p/ESP/EAC3 5.1/ING/EAC3 5.1 Atmos/SUBS) SPWEB", "Mini Title (2024)", 1, 7)]
 
         // [TestCase("", "", 0, 0)]
         public void should_parse_single_episode(string postTitle, string title, int seasonNumber, int episodeNumber)
